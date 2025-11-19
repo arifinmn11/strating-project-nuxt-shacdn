@@ -7,6 +7,7 @@ import * as z from 'zod'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from '~/components/ui/button'
 
+
 const appearanceFormSchema = toTypedSchema(z.object({
   theme: z.enum(['light', 'dark'], {
     required_error: 'Please select a theme.',
