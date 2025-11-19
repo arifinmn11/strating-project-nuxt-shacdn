@@ -3,6 +3,7 @@ import { CalendarDate, DateFormatter, getLocalTimeZone, today } from '@internati
 import { toTypedSchema } from '@vee-validate/zod'
 import { Check, ChevronsUpDown } from 'lucide-vue-next'
 import { toDate } from 'reka-ui/date'
+import { useForm } from 'vee-validate'
 import { h, ref } from 'vue'
 import { toast } from 'vue-sonner'
 import * as z from 'zod'
@@ -44,13 +45,17 @@ const accountFormSchema = toTypedSchema(z.object({
   language: z.string().min(1, 'Please select a language.'),
 }))
 
+const { handleSubmit, setFieldValue } = useForm({
+  validationSchema: accountFormSchema,
+})
+
 // https://github.com/logaretm/vee-validate/issues/3521
 // https://github.com/logaretm/vee-validate/discussions/3571
-async function onSubmit(values: any) {
+const onSubmit = handleSubmit((values) => {
   toast('You submitted the following values:', {
     description: h('pre', { class: 'mt-2 w-[340px] rounded-md bg-slate-950 p-4' }, h('code', { class: 'text-white' }, JSON.stringify(values, null, 2))),
   })
-}
+})
 </script>
 
 <template>
@@ -63,7 +68,7 @@ async function onSubmit(values: any) {
     </p>
   </div>
   <Separator />
-  <Form v-slot="{ setFieldValue }" :validation-schema="accountFormSchema" class="space-y-8" @submit="onSubmit">
+  <form class="space-y-8" @submit="onSubmit">
     <FormField v-slot="{ componentField }" name="name">
       <FormItem>
         <FormLabel>Name</FormLabel>
@@ -183,5 +188,5 @@ async function onSubmit(values: any) {
         Update account
       </Button>
     </div>
-  </Form>
+  </form>
 </template>
