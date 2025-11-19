@@ -36,8 +36,8 @@ const user: {
   email: string
   avatar: string
 } = {
-  name: 'Dian Pratama',
-  email: 'dianpratama2@gmail.com',
+  name: 'Arifin',
+  email: 'arifin@example.com',
   avatar: '/avatars/avatartion.png',
 }
 
