@@ -65,6 +65,12 @@ export default defineNuxtConfig({
       './lib',
     ],
   },
+  runtimeConfig: {
+    public: {
+      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
+      apiToken: process.env.NUXT_PUBLIC_API_TOKEN || '',
+    },
+  },
 
   compatibilityDate: '2024-12-14',
 })
