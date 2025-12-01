@@ -21,10 +21,10 @@ const pages = computed(() => {
   return Array.from({ length: end - start + 1 }, (_, i) => start + i);
 });
 
-const goTo = (page) => {
+function goTo(page) {
   if (page < 1 || page > props.lastPage) return;
   emit("change", page);
-};
+}
 </script>
 
 <template>
@@ -42,8 +42,8 @@ const goTo = (page) => {
     <button
       v-for="page in pages"
       :key="page"
-      @click="goTo(page)"
       class="px-3 py-1 border rounded"
+      @click="goTo(page)"
     >
       {{ page }}
     </button>

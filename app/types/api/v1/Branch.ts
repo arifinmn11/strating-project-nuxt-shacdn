@@ -1,7 +1,11 @@
 export interface Branch {
-  id: number
+  id: number | null
   name: string
   code: string
+  address: string
+  email: string
+  phone: string
+  is_active: boolean
 }
 
 export interface BranchFilter {
@@ -10,8 +14,6 @@ export interface BranchFilter {
   search?: string
   sort_by?: string
   name?: string
-  phone?: string
-  email?: string
   address?: string
   is_active?: string
 }

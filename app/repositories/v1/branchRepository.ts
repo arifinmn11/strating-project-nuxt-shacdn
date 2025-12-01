@@ -14,8 +14,15 @@ export function branchRepository(api: any) {
     return api(`${BASE_URI}/${id}`)
   }
 
+  const updateBranch = (id: number, payload: Partial<Branch>): Promise<Branch> => {
+    return api(`${BASE_URI}/${id}`, {
+      method: 'PUT',
+      body: payload,
+    })
+  }
+
   const createBranch = (payload: Partial<Branch>): Promise<Branch> => {
-    return api(BASE_URI, {
+    return api(`${BASE_URI}`, {
       method: 'POST',
       body: payload,
     })
@@ -30,6 +37,7 @@ export function branchRepository(api: any) {
   return {
     getBranchs,
     getBranchById,
+    updateBranch,
     createBranch,
     getPaginatedBranchs,
   }

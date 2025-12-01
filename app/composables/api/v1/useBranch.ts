@@ -1,4 +1,5 @@
 import { branchService } from '~/services/api/v1/branchService'
+import { useDebounceFn } from '@vueuse/core'
 
 export function useBranch() {
   const { $api } = useNuxtApp()
@@ -12,6 +13,7 @@ export function useBranch() {
   const limit = ref(Number(query.limit ?? 10))
   const search = ref(query.search ?? '')
   const sort_by = ref(query.sort_by ?? 'id|asc')
+  const debouncedSearch = ref(search.value)
 
   const filters = reactive({
     name: query.name ?? '',
@@ -23,20 +25,26 @@ export function useBranch() {
 
   // --- UPDATE URL setiap state berubah ---
   watch(
-    [page, limit, search, sort_by, filters],
+    [page, limit, sort_by, filters, debouncedSearch],
     () => {
       query.page = page.value
       query.limit = limit.value
-      query.search = search.value || undefined
+      query.search = debouncedSearch.value || undefined
       query.sort_by = sort_by.value
 
       Object.entries(filters).forEach(([key, val]) => {
         query[key] = val || undefined
       })
     },
-    { deep: true }
+    { deep: true },
   )
 
+  watch(search, () => {
+    useDebounceFn((val) => {
+      debouncedSearch.value = val
+      page.value = 1 // reset page
+    }, 5000)
+  })
 
   // --- FETCH DATA ---
   const { data, pending, error, refresh } = useAsyncData(
@@ -57,7 +65,7 @@ export function useBranch() {
         ...filters,
       }),
     {
-      watch: [page, limit, search, sort_by, filters],
+      watch: [page, limit, debouncedSearch, sort_by, filters],
     },
   )
 
@@ -94,6 +102,7 @@ export function useBranch() {
     search,
     sort_by,
     filters,
+    debouncedSearch,
 
     // data
     branches,

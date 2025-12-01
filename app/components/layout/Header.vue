@@ -6,7 +6,7 @@ function setLinks() {
     return [{ title: "Home", href: "/" }];
   }
 
-  const segments = route.fullPath.split("/").filter((item) => item !== "");
+  const segments = route.path.split("/").filter((item) => item !== "");
 
   const breadcrumbs = segments.map((item, index) => {
     const str = item.replace(/-/g, " ");
