@@ -2,185 +2,268 @@
 import { useNuxtApp } from '#app'
 import { toTypedSchema } from '@vee-validate/zod'
 import { Loader2 } from 'lucide-vue-next'
-import { useField, useForm } from 'vee-validate'
-import { computed, ref, watch } from 'vue'
+import { useForm } from 'vee-validate'
+import { ref, watch } from 'vue'
+import { toast } from 'vue-sonner'
 import { z } from 'zod'
-
 import { Button } from '@/components/ui/button'
-/* shadcn components (assume auto-import or adjust imports) */
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { useBranch } from '~/composables/api/v1/useBranch'
+import { useBranchForm } from '~/composables/api/v1/useBranchForm'
 import { branchService } from '~/services/api/v1/branchService'
 
-/* Props / Emits */
-const props = defineProps({
-  open: { type: Boolean, default: false },
-})
-const emit = defineEmits(['update:open', 'success'])
+// Types
+interface BranchFormData {
+  name: string
+  code: string
+  email: string
+  phone: string
+  address: string
+  is_active: boolean
+}
 
-/* Zod schema */
-const branchSchema = z.object({
-  name: z.string().min(1, 'Nama wajib diisi'),
-  code: z.string().min(1, 'Kode wajib diisi'),
-  email: z.string().email('Email tidak valid').optional().or(z.literal('')),
-  phone: z.string().optional().or(z.literal('')),
-  address: z.string().optional().or(z.literal('')),
-  // is_active we store as boolean on backend but select returns "1"/"0"
-  is_active: z.union([z.literal('1'), z.literal('0')]),
-})
+// Props & Emits
+interface Props {
+  open?: boolean
+}
 
-/* vee-validate form using zod resolver */
-const { handleSubmit, errors, values, resetForm } = useForm({
-  validationSchema: toTypedSchema(branchSchema),
-})
+interface Emits {
+  (e: 'update:open', value: boolean): void
+  (e: 'success'): void
+}
 
-/* fields (not mandatory if using v-model values) */
-const { value: name } = useField('name')
-const { value: code } = useField('code')
-const { value: email } = useField('email')
-const { value: phone } = useField('phone')
-const { value: address } = useField('address')
-const { value: is_active } = useField('is_active')
-
-/* convert select string <-> stored type */
-const isActiveModel = computed({
-  get: () => String(values.is_active ?? '1'),
-  set: (v: string) => (values.is_active = v),
+const props = withDefaults(defineProps<Props>(), {
+  open: false,
 })
 
-/* Service */
-const { $api } = useNuxtApp()
-const service = branchService($api)
+const emit = defineEmits<Emits>()
 
+// Validation Schema
+const branchSchema = toTypedSchema(
+  z.object({
+    name: z.string().min(1, 'Nama wajib diisi'),
+    code: z.string().min(1, 'Kode wajib diisi'),
+    email: z.string().email('Email tidak valid').or(z.literal('')).optional(),
+    phone: z.string().min(1, 'Nomor telepon wajib diisi'),
+    address: z.string().optional(),
+    is_active: z.boolean().default(true),
+  }),
+)
+
+// Form Setup
+const { handleSubmit, resetForm, setFieldValue, setFieldError } = useForm<BranchFormData>({
+  validationSchema: branchSchema,
+  initialValues: {
+    name: '',
+    code: '',
+    email: '',
+    phone: '',
+    address: '',
+    is_active: true,
+  },
+})
+
+// Services & State
+const { refresh } = useBranch()
+const {
+  form,
+  loadBranch,
+  createBranch,
+  isSubmitting,
+  isSuccess,
+  isLoading,
+  errorRes,
+} = useBranchForm()
 const submitting = ref(false)
 
-const onSubmit = handleSubmit(async (formValues) => {
-  submitting.value = true
-  try {
-    // convert to what backend expects (boolean) if needed
-    const payload = {
-      ...formValues,
-      is_active: formValues.is_active === '1', // or keep string if backend expects '1'/'0'
-    }
-
-    await service.storeBranch(payload) // assumes storeBranch handles POST /v1/branch
-
-    // success -> emit to parent so it can refresh list
+// Handlers
+const onSubmit = handleSubmit(async (values) => {
+  console.log('Creating branch with values:', values)
+  await createBranch(values)
+  if (isSuccess.value) {
     emit('success')
-    emit('update:open', false)
-    resetForm()
+    await refresh()
   }
-  catch (err: any) {
-    // handle api errors (you can map errors to errors object)
-    console.error(err)
-    // Optionally show toast or set field errors
-  }
-  finally {
-    submitting.value = false
+  else {
+    if (errorRes.value.data.code === 422) {
+      const fieldErrors = errorRes.value.data.errors
+
+      fieldErrors.forEach((error: any) => {
+        const field = error.field
+        const message = error.message
+
+        // Set to vee-validate error bag
+        setFieldError(field, message)
+      })
+    }
   }
 })
 
-/* optional: when modal opens, reset form */
-watch(() => props.open, (v) => {
-  if (v)
-    resetForm({ values: { is_active: '1' } })
-})
+function handleClose() {
+  emit('update:open', false)
+  resetForm()
+}
+
+// Watchers
+watch(
+  () => props.open,
+  (isOpen) => {
+    if (isOpen) {
+      resetForm()
+    }
+  },
+)
 </script>
 
 <template>
-  <Dialog :open="open" @update:open="$emit('update:open', $event)">
-    <DialogContent class="sm:max-w-lg w-full">
+  <Dialog :open="open" @update:open="emit('update:open', $event)">
+    <DialogContent class="sm:max-w-lg">
       <DialogHeader>
         <DialogTitle>Tambah Cabang</DialogTitle>
-        <DialogDescription>Tambahkan data cabang baru.</DialogDescription>
+        <DialogDescription>
+          Tambahkan data cabang baru ke dalam sistem.
+        </DialogDescription>
       </DialogHeader>
 
-      <form class="space-y-4" @submit.prevent="onSubmit">
-        <!-- Name -->
-        <div class="grid gap-1">
-          <Label>Nama</Label>
-          <Input v-model="values.name" placeholder="Contoh: Parongpong" />
-          <p v-if="errors.name" class="text-xs text-red-500">
-            {{ errors.name }}
-          </p>
-        </div>
+      <form class="space-y-4" @submit="onSubmit">
+        <!-- Name Field -->
+        <FormField v-slot="{ componentField }" name="name">
+          <FormItem>
+            <FormLabel>Nama</FormLabel>
+            <FormControl>
+              <Input
+                v-bind="componentField"
+                placeholder="Contoh: Parongpong"
+                autocomplete="off"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        </FormField>
 
-        <!-- Code -->
-        <div class="grid gap-1">
-          <Label>Kode</Label>
-          <Input v-model="values.code" placeholder="Kode unik" />
-          <p v-if="errors.code" class="text-xs text-red-500">
-            {{ errors.code }}
-          </p>
-        </div>
+        <!-- Code Field -->
+        <FormField v-slot="{ componentField }" name="code">
+          <FormItem>
+            <FormLabel>Kode</FormLabel>
+            <FormControl>
+              <Input
+                v-bind="componentField"
+                placeholder="Kode unik cabang"
+                autocomplete="off"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        </FormField>
 
-        <!-- Email -->
-        <div class="grid gap-1">
-          <Label>Email</Label>
-          <Input v-model="values.email" placeholder="email@example.com" />
-          <p v-if="errors.email" class="text-xs text-red-500">
-            {{ errors.email }}
-          </p>
-        </div>
+        <!-- Email Field -->
+        <FormField v-slot="{ componentField }" name="email">
+          <FormItem>
+            <FormLabel>Email</FormLabel>
+            <FormControl>
+              <Input
+                v-bind="componentField"
+                type="email"
+                placeholder="email@example.com"
+                autocomplete="email"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        </FormField>
 
-        <!-- Phone -->
-        <div class="grid gap-1">
-          <Label>Phone</Label>
-          <Input v-model="values.phone" placeholder="0812..." />
-          <p v-if="errors.phone" class="text-xs text-red-500">
-            {{ errors.phone }}
-          </p>
-        </div>
+        <!-- Phone Field -->
+        <FormField v-slot="{ componentField }" name="phone">
+          <FormItem>
+            <FormLabel>Nomor Telepon</FormLabel>
+            <FormControl>
+              <Input v-bind="componentField" placeholder="0812..." autocomplete="tel" />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        </FormField>
 
-        <!-- Address -->
-        <div class="grid gap-1">
-          <Label>Address</Label>
-          <Textarea v-model="values.address" placeholder="Alamat lengkap" />
-          <p v-if="errors.address" class="text-xs text-red-500">
-            {{ errors.address }}
-          </p>
-        </div>
+        <!-- Address Field -->
+        <FormField v-slot="{ componentField }" name="address">
+          <FormItem>
+            <FormLabel>Alamat</FormLabel>
+            <FormControl>
+              <Textarea
+                v-bind="componentField"
+                placeholder="Alamat lengkap cabang"
+                rows="3"
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        </FormField>
 
-        <!-- is_active -->
-        <div class="grid gap-1">
-          <Label>Status</Label>
-          <Select v-model="isActiveModel">
-            <SelectTrigger>
-              <SelectValue placeholder="Pilih status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">
-                Aktif
-              </SelectItem>
-              <SelectItem value="0">
-                Tidak Aktif
-              </SelectItem>
-            </SelectContent>
-          </Select>
-          <p v-if="errors.is_active" class="text-xs text-red-500">
-            {{ errors.is_active }}
-          </p>
-        </div>
+        <!-- Status Field -->
+        <FormField v-slot="{ componentField }" name="is_active">
+          <FormItem>
+            <FormLabel>Status</FormLabel>
+            <Select
+              v-bind="componentField"
+              @update:model-value="(val) => setFieldValue('is_active', val)"
+            >
+              <FormControl>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih status" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem :value="true">
+                  Aktif
+                </SelectItem>
+                <SelectItem :value="false">
+                  Tidak Aktif
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        </FormField>
 
         <DialogFooter>
-          <Button type="button" variant="outline" @click="$emit('update:open', false)">
+          <Button
+            type="button"
+            variant="outline"
+            :disabled="submitting"
+            @click="handleClose"
+          >
             Batal
           </Button>
 
           <Button type="submit" :disabled="submitting">
-            <span v-if="submitting" class="flex items-center gap-2">
-              <Loader2 class="w-4 h-4 animate-spin" />
-              Menyimpan...
-            </span>
-            <span v-else>Simpan</span>
+            <Loader2 v-if="submitting" class="mr-2 h-4 w-4 animate-spin" />
+            {{ submitting ? "Menyimpan..." : "Simpan" }}
           </Button>
         </DialogFooter>
       </form>
     </DialogContent>
   </Dialog>
 </template>
-
-<style scoped></style>

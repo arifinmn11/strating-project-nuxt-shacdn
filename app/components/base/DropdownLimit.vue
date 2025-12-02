@@ -1,3 +1,4 @@
+<template
 <Select v-model="branch.limit">
   <SelectTrigger class="w-20">
     <SelectValue placeholder="Limit" />
@@ -9,4 +10,5 @@
     <SelectItem :value="25">25</SelectItem>
     <SelectItem :value="50">50</SelectItem>
   </SelectContent>
-</Select>
+  </Select></Select>
+</template>

@@ -59,18 +59,21 @@ export function useBranchForm() {
   }
 
   // --- CREATE
-  async function createBranch() {
+  async function createBranch(formData?: Partial<Branch>) {
     isSubmitting.value = true
     errorMessage.value = ''
 
     try {
-      await service.storeBranch(form)
+      await service.storeBranch(formData)
       successMessage.value = 'Branch created successfully.'
-      toast('success', { description: successMessage.value })
+      isSuccess.value = true
+      toast.success(successMessage.value, { description: new Date().toTimeString() })
     }
     catch (error: any) {
       errorMessage.value = error?.message || 'Failed to create branch.'
-      toast('error', { description: errorMessage.value })
+      isSuccess.value = false
+      errorRes.value = error
+      toast.error(errorMessage.value, { description: new Date().toTimeString() })
     }
     finally {
       isSubmitting.value = false

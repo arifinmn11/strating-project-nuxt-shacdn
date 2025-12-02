@@ -17,3 +17,12 @@ export interface BranchFilter {
   address?: string
   is_active?: string
 }
+
+export interface BranchPayload {
+  name: string
+  code: string
+  email?: string
+  phone: string
+  address?: string
+  is_active: boolean
+}

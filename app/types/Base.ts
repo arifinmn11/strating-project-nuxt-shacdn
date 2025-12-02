@@ -11,3 +11,11 @@ export interface PaginatedResponse<T> {
   data: T[]
   pagination: PaginationMeta
 }
+
+export interface ApiResponse<T> {
+  status: string
+  errors: any
+  message: string
+  code: number
+  data: T
+}

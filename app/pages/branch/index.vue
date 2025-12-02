@@ -71,21 +71,17 @@ const onEdited = () => {
         <TableRow>
           <TableHead @click="handleSortChange('id|asc')">ID</TableHead>
           <TableHead @click="handleSortChange('name|asc')">Name</TableHead>
+          <TableHead @click="handleSortChange('code|asc')">Code</TableHead>
+          <TableHead @click="handleSortChange('address|asc')">Address</TableHead>
           <TableHead @click="handleSortChange('email|asc')">Email</TableHead>
-          <TableHead @click="handleSortChange('email|asc')">Action</TableHead>
+          <TableHead>Action</TableHead>
         </TableRow>
       </TableHeader>
 
       <TableBody>
         <template v-if="pending">
           <TableRow v-for="n in 5" :key="n">
-            <TableCell class="text-center">
-              <Skeleton class="h-4 w-[250px]" />
-            </TableCell>
-            <TableCell class="text-center">
-              <Skeleton class="h-4 w-[250px]" />
-            </TableCell>
-            <TableCell class="text-center">
+            <TableCell class="text-center" v-for="s in 6" :key="s">
               <Skeleton class="h-4 w-[250px]" />
             </TableCell>
           </TableRow>
@@ -98,7 +94,10 @@ const onEdited = () => {
         >
           <TableCell>{{ item.id }}</TableCell>
           <TableCell>{{ item.name }}</TableCell>
+          <TableCell>{{ item.code }}</TableCell>
+          <TableCell>{{ item.address }}</TableCell>
           <TableCell>{{ item.email }}</TableCell>
+
           <TableCell>
             <div class="flex gap-2">
               <Button
