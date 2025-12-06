@@ -39,11 +39,15 @@ export function useBranch() {
     { deep: true },
   )
 
-  watch(search, () => {
-    useDebounceFn((val) => {
-      debouncedSearch.value = val
-      page.value = 1 // reset page
-    }, 5000)
+  // Debounce the search input so API isn't called on every keystroke
+  const applySearchDebounce = useDebounceFn((val: unknown) => {
+    const sval = Array.isArray(val) ? val.join(' ') : String(val ?? '')
+    debouncedSearch.value = sval
+    page.value = 1 // reset page when search changes
+  }, 300)
+
+  watch(search, (val) => {
+    applySearchDebounce(val)
   })
 
   // --- FETCH DATA ---
@@ -52,7 +56,7 @@ export function useBranch() {
       'branches',
       page.value,
       limit.value,
-      search.value,
+      debouncedSearch.value,
       sort_by.value,
       { ...filters },
     ]),
@@ -60,7 +64,7 @@ export function useBranch() {
       service.fetchPaginatedBranches({
         page: page.value,
         limit: limit.value,
-        search: search.value,
+        search: debouncedSearch.value,
         sort_by: sort_by.value,
         ...filters,
       }),
@@ -70,8 +74,8 @@ export function useBranch() {
   )
 
   // --- OUTPUT COMPUTED ---
-  const branches = computed(() => data?.value?.data?.data ?? [])
-  const pagination = computed(() => data?.value?.data?.pagination ?? {})
+  const branches = computed(() => (data as any)?.value?.data?.data ?? [])
+  const pagination = computed(() => (data as any)?.value?.data?.pagination ?? {})
 
   // --- PAGINATION ACTION ---
   const next = () => {
@@ -111,6 +115,7 @@ export function useBranch() {
     error,
 
     // actions
+    applySearchDebounce,
     refresh,
     next,
     prev,
