@@ -19,6 +19,16 @@ export const navMenu: NavMenu[] = [
         icon: 'i-lucide-calendar-check-2',
         link: '/tasks',
       },
+      {
+        title: 'Brnaches',
+        icon: 'i-lucide-git-branch',
+        link: '/branch',
+      },
+      {
+        title: 'Brnaches 2',
+        icon: 'i-lucide-',
+        link: '/branch/list',
+      },
     ],
   },
   {

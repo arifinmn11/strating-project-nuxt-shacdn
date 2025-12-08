@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronLeftIcon, CircleChevronLeft } from "lucide-vue-next";
+import { CircleChevronRight, CircleChevronLeft, ChevronsRight, ChevronsLeft } from "lucide-vue-next";
 import Button from "../ui/button/Button.vue";
 
 const props = defineProps({
@@ -37,8 +37,7 @@ function goTo(page: number) {
       class="px-3 py-1 disabled:opacity-40"
       :disabled="currentPage === 1"
       @click="goTo(1)"
-    >
-      First
+      ><ChevronsLeft />
     </Button>
 
     <!-- Prev -->
@@ -96,7 +95,7 @@ function goTo(page: number) {
       :disabled="currentPage === lastPage"
       @click="goTo(currentPage + 1)"
     >
-      Next
+      <CircleChevronRight />
     </Button>
 
     <!-- Last -->
@@ -107,7 +106,7 @@ function goTo(page: number) {
       :disabled="currentPage === lastPage"
       @click="goTo(lastPage)"
     >
-      Last
+      <ChevronsRight />
     </Button>
   </div>
 </template>

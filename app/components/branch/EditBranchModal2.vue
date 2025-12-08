@@ -6,10 +6,24 @@ import { useBranch } from "~/composables/api/v1/useBranch";
 import { useBranchForm } from "~/composables/api/v1/useBranchForm";
 import Spinner from "../ui/spinner/Spinner.vue";
 
-const props = defineProps<{ id: number | null; open: boolean }>();
+const props = defineProps<{
+  id: number | null;
+  open: boolean;
+  isDisabled: {
+    type: boolean;
+    default: false;
+  };
+}>();
 const emit = defineEmits(["update:open", "success"]);
 
-const { form, loadBranch, updateBranch, isSubmitting, isSuccess, isLoading } = useBranchForm();
+const {
+  form,
+  loadBranch,
+  updateBranch,
+  isSubmitting,
+  isSuccess,
+  isLoading,
+} = useBranchForm();
 const { refresh } = useBranch();
 
 // Schema
@@ -73,22 +87,23 @@ const onSubmit = handleSubmit(async (values) => {
         <DialogTitle>Edit Branch</DialogTitle>
       </DialogHeader>
 
-      <form class="space-y-4" @submit.prevent="onSubmit" v-if="!isLoading" >
+      <form class="space-y-4" @submit.prevent="onSubmit" v-if="!isLoading">
         <div>
           <Label>Name</Label>
-          <Input v-model="name" />
+          {{ props.isDisabled }}
+          <Input v-model="name" :disabled="props.isDisabled" :class="props.isDisabled ? 'disabled:text-gray-500' : ''" />
           <p class="text-red-500 text-sm">{{ nameError }}</p>
         </div>
 
         <div>
           <Label>Code</Label>
-          <Input v-model="code" />
+          <Input v-model="code" :disabled="props.isDisabled" />
           <p class="text-red-500 text-sm">{{ codeError }}</p>
         </div>
 
         <div>
           <Label>Address</Label>
-          <Textarea v-model="address" />
+          <Textarea v-model="address" :disabled="props.isDisabled" />
           <p class="text-red-500 text-sm">{{ addressError }}</p>
         </div>
 
@@ -110,9 +125,7 @@ const onSubmit = handleSubmit(async (values) => {
       </form>
       <div v-else class="py-10 text-center">
         <Spinner class="w-6 h-6 animate-spin mx-auto" />
-        <p class="text-sm text-muted-foreground mt-2">
-          Loading...
-        </p>
+        <p class="text-sm text-muted-foreground mt-2">Loading...</p>
       </div>
     </DialogContent>
   </Dialog>

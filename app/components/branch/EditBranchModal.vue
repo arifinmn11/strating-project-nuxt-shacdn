@@ -17,7 +17,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const props = defineProps<{ id: number | null; open: boolean }>();
+const props = defineProps<{
+  id: number | null;
+  open: boolean;
+  isDisabled: {
+    type: boolean;
+    default: false;
+  };
+}>();
 const emit = defineEmits(["update:open", "success"]);
 
 const {
@@ -129,7 +136,11 @@ const onSubmit = handleSubmit(async (values) => {
           <!-- Name -->
           <div class="grid gap-1">
             <Label>Nama</Label>
-            <Input v-model="name" placeholder="Contoh: Parongpong" />
+            <Input
+              v-model="name"
+              :disabled="props.isDisabled"
+              placeholder="Contoh: Parongpong"
+            />
             <p v-if="errors.name" class="text-xs text-red-500">
               {{ errors.name }}
             </p>
@@ -189,7 +200,7 @@ const onSubmit = handleSubmit(async (values) => {
             </p>
           </div>
 
-          <DialogFooter>
+          <DialogFooter v-if="!props.isDisabled">
             <div class="flex justify-end">
               <Button
                 type="button"
